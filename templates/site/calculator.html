@@ -1,0 +1,730 @@
+{% extends 'base.html' %}
+
+{% block title %}Калькулятор мероприятия — Mir Prokat{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
+     x-data="eventCalculator()"
+     x-init="initCalculator()">
+
+    <!-- Header -->
+    <div class="text-center max-w-2xl mx-auto mb-10">
+        <span class="text-xs uppercase tracking-widest font-bold text-amber-700">Интерактивный расчёт</span>
+        <h1 class="font-serif text-3xl sm:text-4xl font-bold text-stone-900 mt-1 mb-3">
+            Калькулятор аренды на мероприятие
+        </h1>
+        <p class="text-stone-500 text-sm">
+            Ответьте на несколько простых вопросов — система мгновенно рассчитает точное количество мебели, посуды и проверит наличие на складе.
+        </p>
+
+        <!-- Stepper Indicator -->
+        <div class="mt-8 flex items-center justify-between relative max-w-xl mx-auto px-2">
+            <div class="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-0.5 bg-stone-200 -z-0"></div>
+            <div class="absolute left-6 top-1/2 -translate-y-1/2 h-0.5 bg-amber-600 transition-all duration-300 -z-0"
+                 :style="'width: ' + ((step - 1) / 5 * 100) + '%'"></div>
+
+            <template x-for="(sName, sIdx) in ['Гости', 'Тип', 'Пакет', 'Допы', 'Дата', 'Заявка']">
+                <div class="flex flex-col items-center relative z-10 cursor-pointer" @click="if (sIdx + 1 < step) step = sIdx + 1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm"
+                         :class="step > sIdx + 1 ? 'bg-amber-600 text-white' : (step === sIdx + 1 ? 'bg-stone-900 text-white ring-4 ring-amber-100' : 'bg-white text-stone-400 border border-stone-300')">
+                        <span x-show="step > sIdx + 1">✓</span>
+                        <span x-show="step <= sIdx + 1" x-text="sIdx + 1"></span>
+                    </div>
+                    <span class="text-[10px] font-medium mt-1.5 hidden sm:block"
+                          :class="step === sIdx + 1 ? 'text-stone-900 font-bold' : 'text-stone-400'"
+                          x-text="sName"></span>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- MAIN FORM CONTAINER -->
+    <div class="bg-white rounded-3xl border border-stone-200/80 shadow-sm p-6 sm:p-10 mb-8">
+
+        <!-- ================= ШАГ 1: КОЛИЧЕСТВО ГОСТЕЙ ================= -->
+        <div x-show="step === 1" x-transition>
+            <div class="mb-6">
+                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Шаг 1 из 6</span>
+                <h2 class="font-serif text-2xl font-bold text-stone-900 mt-1">Сколько будет гостей?</h2>
+                <p class="text-stone-500 text-xs mt-1">Выберите готовый вариант или введите точное число</p>
+            </div>
+
+            <!-- Preset buttons -->
+            <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
+                <template x-for="g in [10, 20, 30, 50, 70, 100, 150, 200, 300]">
+                    <button type="button"
+                            @click="setGuests(g)"
+                            :class="guests === g ? 'bg-stone-900 text-white ring-2 ring-stone-900 shadow-md' : 'bg-stone-50 hover:bg-stone-100 text-stone-800 border border-stone-200'"
+                            class="py-3 px-2 rounded-2xl font-bold text-sm sm:text-base transition text-center">
+                        <span x-text="g"></span>
+                    </button>
+                </template>
+                <button type="button"
+                        @click="customInput = true"
+                        :class="customInput ? 'bg-amber-100 border-amber-400 text-amber-900' : 'bg-stone-50 text-stone-600 border border-stone-200'"
+                        class="py-3 px-2 rounded-2xl font-semibold text-xs sm:text-sm border transition">
+                    Свое число
+                </button>
+            </div>
+
+            <!-- Custom Guests Input -->
+            <div class="p-5 bg-stone-50 rounded-2xl border border-stone-200 mb-8">
+                <label class="block text-xs font-semibold text-stone-700 mb-2">Точное количество персон:</label>
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="if (guests > 5) setGuests(guests - 5)" class="w-11 h-11 rounded-xl bg-white border border-stone-300 font-bold text-lg hover:bg-stone-100 text-stone-700">-</button>
+                    <input type="number" x-model.number="guests" @input="recalculate()" min="5" max="1000" class="w-32 py-2.5 px-4 text-center font-bold text-xl rounded-xl border border-stone-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <button type="button" @click="setGuests(guests + 5)" class="w-11 h-11 rounded-xl bg-white border border-stone-300 font-bold text-lg hover:bg-stone-100 text-stone-700">+</button>
+                    <span class="text-sm text-stone-500 font-medium">гостей на мероприятии</span>
+                </div>
+            </div>
+
+            <!-- Live Calculation Preview on Step 1 (Section 7) -->
+            <div class="p-5 rounded-2xl bg-amber-50/60 border border-amber-200/80 mb-8">
+                <div class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-3">
+                    Автоматический расчёт базы на <span x-text="guests"></span> гостей:
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-stone-700">
+                    <div class="p-2.5 bg-white rounded-xl border border-amber-200/60">
+                        <div class="text-stone-400">Стулья (1:1)</div>
+                        <div class="font-bold text-stone-900 text-base"><span x-text="guests"></span> шт.</div>
+                    </div>
+                    <div class="p-2.5 bg-white rounded-xl border border-amber-200/60">
+                        <div class="text-stone-400">Столы (1 стол = 10 чел.)</div>
+                        <div class="font-bold text-stone-900 text-base"><span x-text="Math.ceil(guests / 10)"></span> шт.</div>
+                    </div>
+                    <div class="p-2.5 bg-white rounded-xl border border-amber-200/60">
+                        <div class="text-stone-400">Тарелки (1:1)</div>
+                        <div class="font-bold text-stone-900 text-base"><span x-text="guests"></span> шт.</div>
+                    </div>
+                    <div class="p-2.5 bg-white rounded-xl border border-amber-200/60">
+                        <div class="text-stone-400">Приборы (комплект)</div>
+                        <div class="font-bold text-stone-900 text-base"><span x-text="guests"></span> компл.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" @click="step = 2" class="px-8 py-3.5 rounded-full bg-stone-900 text-white font-semibold text-sm hover:bg-stone-800 transition flex items-center gap-2">
+                    Далее: Тип мероприятия →
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= ШАГ 2: ТИП МЕРОПРИЯТИЯ (Секция 5) ================= -->
+        <div x-show="step === 2" x-transition x-cloak>
+            <div class="mb-6">
+                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Шаг 2 из 6</span>
+                <h2 class="font-serif text-2xl font-bold text-stone-900 mt-1">Какое у вас мероприятие?</h2>
+                <p class="text-stone-500 text-xs mt-1">Это поможет нам подобрать правильный стиль оформления и комплектации</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                {% for evt in event_types %}
+                <button type="button"
+                        @click="selectedEventType = '{{ evt.id }}'; selectedEventTypeName = '{{ evt.name }}'"
+                        :class="selectedEventType === '{{ evt.id }}' ? 'border-amber-500 ring-2 ring-amber-400 bg-amber-50/50' : 'border-stone-200 bg-white hover:border-stone-300'"
+                        class="p-5 rounded-2xl border text-left transition flex flex-col justify-between">
+                    <span class="text-3xl mb-3">{{ evt.icon }}</span>
+                    <div>
+                        <div class="font-bold text-stone-900 text-sm">{{ evt.name }}</div>
+                        <div class="text-[11px] text-stone-400 mt-0.5">Оптимальная рассадка</div>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-stone-100">
+                <button type="button" @click="step = 1" class="text-xs font-semibold text-stone-500 hover:text-stone-800">
+                    ← Назад к количеству гостей
+                </button>
+                <button type="button" @click="step = 3" class="px-8 py-3.5 rounded-full bg-stone-900 text-white font-semibold text-sm hover:bg-stone-800 transition">
+                    Далее: Выбор пакета →
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= ШАГ 3: ВЫБОР ПАКЕТА (Секция 6) ================= -->
+        <div x-show="step === 3" x-transition x-cloak>
+            <div class="mb-6">
+                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Шаг 3 из 6</span>
+                <h2 class="font-serif text-2xl font-bold text-stone-900 mt-1">Выберите готовый пакет</h2>
+                <p class="text-stone-500 text-xs mt-1">Количество оборудования автоматически рассчитано на <b class="text-stone-800"><span x-text="guests"></span> гостей</b></p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {% for pkg in packages %}
+                <div @click="selectPackage({{ pkg.id }}, '{{ pkg.tier }}', '{{ pkg.name }}')"
+                     :class="selectedPackageId === {{ pkg.id }} ? 'border-amber-500 ring-2 ring-amber-500 bg-amber-50/20' : 'border-stone-200 hover:border-stone-300 bg-white'"
+                     class="p-6 rounded-3xl border cursor-pointer transition flex flex-col justify-between relative">
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-700">{{ pkg.get_tier_display }}</span>
+                            <span class="text-xl">
+                                {% if pkg.tier == 'basic' %}🌿{% elif pkg.tier == 'standard' %}🌟{% else %}👑{% endif %}
+                            </span>
+                        </div>
+                        <h3 class="font-serif text-xl font-bold text-stone-900 mb-2">{{ pkg.name }}</h3>
+                        <p class="text-xs text-stone-500 mb-4">{{ pkg.description }}</p>
+
+                        <!-- Items breakdown list -->
+                        <div class="space-y-1.5 text-xs text-stone-700 py-3 border-y border-stone-200/80 mb-4">
+                            <div class="flex justify-between">
+                                <span>Банкетные стулья:</span>
+                                <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Банкетные столы:</span>
+                                <span class="font-bold"><span x-text="Math.ceil(guests / 10)"></span> шт.</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Тарелки подстановочные:</span>
+                                <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Приборы (вилка, нож, ложка):</span>
+                                <span class="font-bold"><span x-text="guests"></span> компл.</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Стаканы для воды:</span>
+                                <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Скатерти в пол:</span>
+                                <span class="font-bold"><span x-text="Math.ceil(guests / 10)"></span> шт.</span>
+                            </div>
+                            {% if pkg.tier == 'standard' or pkg.tier == 'premium' %}
+                            <div class="flex justify-between text-amber-800">
+                                <span>Бокалы для вина:</span>
+                                <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                            </div>
+                            <div class="flex justify-between text-amber-800">
+                                <span>Текстиль и салфетки:</span>
+                                <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                            </div>
+                            {% endif %}
+                            {% if pkg.tier == 'premium' %}
+                            <div class="flex justify-between text-amber-900 font-semibold">
+                                <span>Золотые стулья Кьявари:</span>
+                                <span>Да</span>
+                            </div>
+                            <div class="flex justify-between text-amber-900 font-semibold">
+                                <span>Арка + декор:</span>
+                                <span>Включено</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="mb-3">
+                            <span class="text-[11px] text-stone-400">Стоимость пакета:</span>
+                            <div class="text-xl font-serif font-bold text-stone-900">
+                                {% if pkg.tier == 'basic' %}
+                                <span x-text="(guests * 1100).toLocaleString()"></span> ₸
+                                {% elif pkg.tier == 'standard' %}
+                                <span x-text="(guests * 1550).toLocaleString()"></span> ₸
+                                {% else %}
+                                <span x-text="(guests * 2300 + 15000).toLocaleString()"></span> ₸
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="w-full py-2.5 rounded-xl text-center text-xs font-bold transition"
+                             :class="selectedPackageId === {{ pkg.id }} ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-700'">
+                            <span x-text="selectedPackageId === {{ pkg.id }} ? '✓ Выбран' : 'Выбрать этот пакет'"></span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-stone-100">
+                <button type="button" @click="step = 2" class="text-xs font-semibold text-stone-500 hover:text-stone-800">
+                    ← Назад к типу мероприятия
+                </button>
+                <button type="button" @click="step = 4" class="px-8 py-3.5 rounded-full bg-stone-900 text-white font-semibold text-sm hover:bg-stone-800 transition">
+                    Далее: Дополнительные товары →
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= ШАГ 4: ДОПОЛНИТЕЛЬНЫЕ ТОВАРЫ (Секция 8) ================= -->
+        <div x-show="step === 4" x-transition x-cloak>
+            <div class="mb-6">
+                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Шаг 4 из 6</span>
+                <h2 class="font-serif text-2xl font-bold text-stone-900 mt-1">Добавить дополнительные товары</h2>
+                <p class="text-stone-500 text-xs mt-1">При необходимости добавьте запас стульев, бокалы или праздничный декор</p>
+            </div>
+
+            <!-- Extra Products Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {% for prod in extra_products %}
+                <div class="p-4 rounded-2xl border border-stone-200 bg-white flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">
+                            {% if 'стул' in prod.name|lower %}🪑
+                            {% elif 'стол' in prod.name|lower %}🪵
+                            {% elif 'бокал' in prod.name|lower %}🥂
+                            {% elif 'тарелка' in prod.name|lower %}🍽
+                            {% elif 'арка' in prod.name|lower %}🌸
+                            {% elif 'цвет' in prod.name|lower %}💐
+                            {% else %}📦{% endif %}
+                        </span>
+                        <span class="text-xs font-bold text-stone-900">{{ prod.rental_price|floatformat:0 }} ₸</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-stone-900 text-xs leading-snug">{{ prod.name }}</h4>
+                        <span class="text-[10px] text-stone-400">На складе: {{ prod.available_quantity }} шт.</span>
+                    </div>
+
+                    <!-- Quantity controls -->
+                    <div class="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between">
+                        <span class="text-xs text-stone-500">Добавлено:</span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="changeExtraQty({{ prod.id }}, {{ prod.rental_price }}, -1)" class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold">-</button>
+                            <span class="w-8 text-center text-xs font-bold" x-text="extraItems[{{ prod.id }}]?.qty || 0"></span>
+                            <button type="button" @click="changeExtraQty({{ prod.id }}, {{ prod.rental_price }}, 1)" class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold">+</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-stone-100">
+                <button type="button" @click="step = 3" class="text-xs font-semibold text-stone-500 hover:text-stone-800">
+                    ← Назад к пакетам
+                </button>
+                <button type="button" @click="step = 5; checkAvailabilityOnDate()" class="px-8 py-3.5 rounded-full bg-stone-900 text-white font-semibold text-sm hover:bg-stone-800 transition">
+                    Далее: Дата и проверка склада →
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= ШАГ 5: ДАТА МЕРОПРИЯТИЯ И ПРОВЕРКА СКЛАДА (Секция 9) ================= -->
+        <div x-show="step === 5" x-transition x-cloak>
+            <div class="mb-6">
+                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Шаг 5 из 6</span>
+                <h2 class="font-serif text-2xl font-bold text-stone-900 mt-1">Выберите дату мероприятия</h2>
+                <p class="text-stone-500 text-xs mt-1">Система мгновенно проверит складские остатки на выбранный день</p>
+            </div>
+
+            <div class="max-w-md mx-auto mb-8">
+                <label class="block text-xs font-semibold text-stone-700 mb-2">Дата вашего события:</label>
+                <input type="date"
+                       x-model="eventDate"
+                       @change="checkAvailabilityOnDate()"
+                       :min="minDate"
+                       class="w-full py-3.5 px-4 rounded-2xl border border-stone-300 text-base font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50">
+            </div>
+
+            <!-- Availability Result Banner (Секция 9) -->
+            <div class="mb-8">
+                <!-- Loading State -->
+                <div x-show="checkingStock" class="p-6 text-center text-xs text-stone-500 bg-stone-50 rounded-2xl">
+                    ⏳ Проверяем физическое наличие оборудования на складе...
+                </div>
+
+                <!-- Success Banner -->
+                <div x-show="!checkingStock && stockCheckDone && stockAvailable" class="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-2xl">✅</span>
+                        <div class="font-bold text-sm">Все товары доступны на выбранную дату!</div>
+                    </div>
+                    <p class="text-xs text-emerald-700 leading-relaxed">
+                        На <b x-text="formatDate(eventDate)"></b> склад подтверждает наличие нужного количества стульев, столов, посуды и текстиля. Можно переходить к оформлению заявки.
+                    </p>
+                </div>
+
+                <!-- Shortage Warning Banner (Секция 9) -->
+                <div x-show="!checkingStock && stockCheckDone && !stockAvailable" class="p-6 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-2xl">⚠️</span>
+                        <div class="font-bold text-sm">Недостаточно товара на выбранную дату</div>
+                    </div>
+                    <p class="text-xs text-rose-700 mb-3">
+                        На выбранную дату часть оборудования уже зарезервирована под другие подтвержденные заказы:
+                    </p>
+                    <ul class="text-xs space-y-1 list-disc list-inside text-rose-800">
+                        <template x-for="iss in stockIssues">
+                            <li>
+                                <span class="font-bold" x-text="iss.name"></span>: запрошено <span x-text="iss.requested"></span> шт., но свободно только <span x-text="iss.available"></span> шт.
+                            </li>
+                        </template>
+                    </ul>
+                    <p class="text-xs text-rose-600 mt-3 italic">
+                        Рекомендация: выберите другую дату или уменьшите количество позиций.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-stone-100">
+                <button type="button" @click="step = 4" class="text-xs font-semibold text-stone-500 hover:text-stone-800">
+                    ← Назад к дополнительным товарам
+                </button>
+                <button type="button"
+                        @click="step = 6"
+                        :disabled="!eventDate || !stockAvailable"
+                        :class="(!eventDate || !stockAvailable) ? 'opacity-40 cursor-not-allowed bg-stone-400' : 'bg-stone-900 hover:bg-stone-800'"
+                        class="px-8 py-3.5 rounded-full text-white font-semibold text-sm transition">
+                    Перейти к оформлению заказа →
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= ШАГ 6: КОРЗИНА И ОФОРМЛЕНИЕ ЗАЯВКИ (Секции 11 & 12) ================= -->
+        <div x-show="step === 6" x-transition x-cloak>
+            <div class="mb-8">
+                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Шаг 6 из 6</span>
+                <h2 class="font-serif text-2xl font-bold text-stone-900 mt-1">Итоговый расчёт и оформление заявки</h2>
+                <p class="text-stone-500 text-xs mt-1">Проверьте состав заказа и укажите контактные данные для связи</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                <!-- Summary / Cart Review (Секция 11) -->
+                <div class="lg:col-span-5 bg-stone-50 p-6 rounded-3xl border border-stone-200">
+                    <h3 class="font-serif text-lg font-bold text-stone-900 mb-4 pb-2 border-b border-stone-200">
+                        Ваш заказ
+                    </h3>
+
+                    <div class="space-y-2 text-xs text-stone-600 mb-6">
+                        <div class="flex justify-between">
+                            <span>📅 Дата мероприятия:</span>
+                            <span class="font-bold text-stone-900" x-text="formatDate(eventDate)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>👥 Количество гостей:</span>
+                            <span class="font-bold text-stone-900" x-text="guests + ' чел.'"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>📦 Пакет:</span>
+                            <span class="font-bold text-amber-800" x-text="selectedPackageName"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>🎉 Тип события:</span>
+                            <span class="font-bold text-stone-900" x-text="selectedEventTypeName"></span>
+                        </div>
+                    </div>
+
+                    <!-- Items Cost -->
+                    <div class="pt-4 border-t border-stone-200 space-y-2 text-xs">
+                        <div class="flex justify-between text-stone-700">
+                            <span>Аренда оборудования:</span>
+                            <span class="font-semibold" x-text="calculateItemsPrice().toLocaleString() + ' ₸'"></span>
+                        </div>
+                        <div class="flex justify-between text-stone-700" x-show="needDelivery">
+                            <span>Доставка:</span>
+                            <span class="font-semibold" x-text="deliveryPrice.toLocaleString() + ' ₸'"></span>
+                        </div>
+                        <div class="flex justify-between text-stone-700" x-show="needSetup">
+                            <span>Монтаж:</span>
+                            <span class="font-semibold">15 000 ₸</span>
+                        </div>
+                        <div class="flex justify-between text-stone-700" x-show="needTeardown">
+                            <span>Демонтаж:</span>
+                            <span class="font-semibold">10 000 ₸</span>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="mt-6 pt-4 border-t-2 border-stone-300">
+                        <div class="flex justify-between items-baseline mb-1">
+                            <span class="font-bold text-stone-900 text-sm">Итого:</span>
+                            <span class="font-serif font-bold text-2xl text-stone-900" x-text="calculateGrandTotal().toLocaleString() + ' ₸'"></span>
+                        </div>
+                        <div class="text-[11px] text-stone-500">
+                            Залог (возвратный): <span class="font-semibold" x-text="calculateDeposit().toLocaleString() + ' ₸'"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900">
+                        💡 Доставка, монтаж и залог рассчитываются и подтверждаются менеджером при согласовании.
+                    </div>
+                </div>
+
+                <!-- Client Contact Form (Секция 12) -->
+                <div class="lg:col-span-7">
+                    <form @submit.prevent="submitOrder">
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-700 mb-1">Ваше имя *</label>
+                                    <input type="text" x-model="clientName" required placeholder="Иван" class="w-full py-2.5 px-3.5 rounded-xl border border-stone-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-700 mb-1">Телефон *</label>
+                                    <input type="tel" x-model="clientPhone" required placeholder="+7 777 123 4567" class="w-full py-2.5 px-3.5 rounded-xl border border-stone-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-700 mb-1">Telegram (юзернейм)</label>
+                                    <input type="text" x-model="clientTelegram" placeholder="@username" class="w-full py-2.5 px-3.5 rounded-xl border border-stone-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-700 mb-1">Время начала мероприятия</label>
+                                    <input type="time" x-model="eventTime" class="w-full py-2.5 px-3.5 rounded-xl border border-stone-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-700 mb-1">Адрес проведения мероприятия</label>
+                                <input type="text" x-model="address" placeholder="г. Алматы, ул. Абая 100, зал торжеств" class="w-full py-2.5 px-3.5 rounded-xl border border-stone-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            </div>
+
+                            <!-- Services switches -->
+                            <div class="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3 text-xs">
+                                <label class="flex items-center gap-2 cursor-pointer font-medium text-stone-800">
+                                    <input type="checkbox" x-model="needDelivery" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
+                                    <span>Нужна доставка оборудования</span>
+                                </label>
+                                <div x-show="needDelivery" class="pl-6 pt-1">
+                                    <select x-model="deliveryZoneId" @change="updateDeliveryZone()" class="w-full py-2 px-3 rounded-lg border border-stone-300 text-xs">
+                                        <option value="">Выберите зону доставки</option>
+                                        {% for zone in delivery_zones %}
+                                        <option value="{{ zone.id }}" data-price="{{ zone.price }}">{{ zone.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <label class="flex items-center gap-2 cursor-pointer font-medium text-stone-800">
+                                    <input type="checkbox" x-model="needSetup" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
+                                    <span>Нужен монтаж и расстановка (+15 000 ₸)</span>
+                                </label>
+
+                                <label class="flex items-center gap-2 cursor-pointer font-medium text-stone-800">
+                                    <input type="checkbox" x-model="needTeardown" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
+                                    <span>Нужен демонтаж после праздника (+10 000 ₸)</span>
+                                </label>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-700 mb-1">Комментарий к заказу</label>
+                                <textarea x-model="comment" rows="2" placeholder="Особые пожелания, этаж, время заезда..." class="w-full py-2 px-3.5 rounded-xl border border-stone-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                            </div>
+
+                            <button type="submit"
+                                    :disabled="submitting"
+                                    class="w-full py-4 rounded-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-base transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                                <span x-show="!submitting">⚡️ Оставить заявку на аренду</span>
+                                <span x-show="submitting">Отправляем заявку...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-stone-100">
+                <button type="button" @click="step = 5" class="text-xs font-semibold text-stone-500 hover:text-stone-800">
+                    ← Назад к дате
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= УСПЕШНОЕ ОФОРМЛЕНИЕ ЗАЯВКИ (Секция 13) ================= -->
+    <div x-show="orderSuccess" x-transition x-cloak class="bg-white rounded-3xl border border-stone-200 p-8 sm:p-14 text-center max-w-2xl mx-auto shadow-lg">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4">
+            ✓
+        </div>
+        <span class="text-xs uppercase tracking-widest font-bold text-emerald-700">Заявка принята</span>
+        <h2 class="font-serif text-3xl font-bold text-stone-900 mt-1 mb-2">
+            Номер заявки: #<span x-text="orderNumber"></span>
+        </h2>
+        <p class="text-stone-600 text-sm max-w-md mx-auto mb-8">
+            «Наш менеджер свяжется с вами для подтверждения заказа и согласования точного времени доставки.»
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a :href="'/orders/' + orderNumber + '/'" class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-stone-900 text-white font-semibold text-sm hover:bg-stone-800 transition">
+                Посмотреть статус заказа
+            </a>
+            <a href="https://t.me/mir_prokat_bot" target="_blank" class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-semibold text-sm hover:bg-sky-100 transition flex items-center justify-center gap-2">
+                <span>💬</span> Написать менеджеру в Telegram
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function eventCalculator() {
+    return {
+        step: 1,
+        guests: 100,
+        customInput: false,
+        selectedEventType: '{{ event_types.first.id|default:1 }}',
+        selectedEventTypeName: '{{ event_types.first.name|default:"Свадьба" }}',
+        selectedPackageId: {{ packages.first.id|default:1 }},
+        selectedPackageTier: '{{ packages.first.tier|default:"basic" }}',
+        selectedPackageName: '{{ packages.first.name|default:"BASIC" }}',
+        extraItems: {},
+        eventDate: '',
+        eventTime: '',
+        minDate: new Date().toISOString().split('T')[0],
+        checkingStock: false,
+        stockCheckDone: false,
+        stockAvailable: true,
+        stockIssues: [],
+        clientName: '',
+        clientPhone: '',
+        clientTelegram: '',
+        address: '',
+        comment: '',
+        needDelivery: true,
+        deliveryZoneId: '',
+        deliveryPrice: 6000,
+        needSetup: false,
+        needTeardown: false,
+        submitting: false,
+        orderSuccess: false,
+        orderNumber: '',
+
+        initCalculator() {
+            // Read URL params if any
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('guests')) this.guests = parseInt(params.get('guests'));
+            if (params.get('package_id')) this.selectedPackageId = parseInt(params.get('package_id'));
+        },
+
+        setGuests(count) {
+            this.guests = count;
+            this.customInput = false;
+            this.recalculate();
+        },
+
+        recalculate() {
+            if (this.eventDate) {
+                this.checkAvailabilityOnDate();
+            }
+        },
+
+        selectPackage(id, tier, name) {
+            this.selectedPackageId = id;
+            this.selectedPackageTier = tier;
+            this.selectedPackageName = name;
+        },
+
+        changeExtraQty(id, price, delta) {
+            if (!this.extraItems[id]) {
+                this.extraItems[id] = { qty: 0, price: price };
+            }
+            this.extraItems[id].qty = Math.max(0, this.extraItems[id].qty + delta);
+        },
+
+        calculateItemsPrice() {
+            let base = 0;
+            if (this.selectedPackageTier === 'basic') base = this.guests * 1100;
+            else if (this.selectedPackageTier === 'standard') base = this.guests * 1550;
+            else base = this.guests * 2300 + 15000;
+
+            let extras = 0;
+            for (const key in this.extraItems) {
+                extras += (this.extraItems[key].qty * this.extraItems[key].price);
+            }
+            return base + extras;
+        },
+
+        calculateDeposit() {
+            return Math.round(this.calculateItemsPrice() * 0.4);
+        },
+
+        calculateGrandTotal() {
+            let total = this.calculateItemsPrice();
+            if (this.needDelivery) total += this.deliveryPrice;
+            if (this.needSetup) total += 15000;
+            if (this.needTeardown) total += 10000;
+            return total;
+        },
+
+        updateDeliveryZone() {
+            const select = document.querySelector('select[x-model="deliveryZoneId"]');
+            const selectedOpt = select.options[select.selectedIndex];
+            const p = selectedOpt.getAttribute('data-price');
+            if (p) this.deliveryPrice = parseFloat(p);
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return 'Не выбрана';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        },
+
+        async checkAvailabilityOnDate() {
+            if (!this.eventDate) return;
+            this.checkingStock = true;
+            this.stockCheckDone = false;
+
+            // Generate items to check
+            const items = [
+                { product_id: 1, quantity: this.guests }, // стулья
+                { product_id: 3, quantity: Math.ceil(this.guests / 10) } // столы
+            ];
+
+            try {
+                const res = await fetch(`/api/check-date/?date=${this.eventDate}&items=${encodeURIComponent(JSON.stringify(items))}`);
+                const data = await res.json();
+                this.checkingStock = false;
+                this.stockCheckDone = true;
+                this.stockAvailable = data.all_available;
+                this.stockIssues = data.results.filter(r => !r.is_available);
+            } catch (e) {
+                this.checkingStock = false;
+                this.stockCheckDone = true;
+                this.stockAvailable = true;
+            }
+        },
+
+        async submitOrder() {
+            if (this.submitting) return;
+            this.submitting = true;
+
+            const payload = {
+                client_name: this.clientName,
+                client_phone: this.clientPhone,
+                client_telegram: this.clientTelegram,
+                event_date: this.eventDate,
+                event_time: this.eventTime,
+                guest_count: this.guests,
+                event_type_id: this.selectedEventType,
+                package_id: this.selectedPackageId,
+                address: this.address,
+                comment: this.comment,
+                need_delivery: this.needDelivery,
+                delivery_zone_id: this.deliveryZoneId,
+                delivery_price: this.deliveryPrice,
+                need_setup: this.needSetup,
+                need_teardown: this.needTeardown,
+                items: [],
+                services: []
+            };
+
+            try {
+                const resp = await fetch('/orders/submit/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const resData = await resp.json();
+                this.submitting = false;
+
+                if (resData.success) {
+                    this.orderNumber = resData.order_number;
+                    this.orderSuccess = true;
+                    this.step = 0; // hide forms
+                    window.scrollTo({ top: 100, behavior: 'smooth' });
+                } else {
+                    alert('Ошибка: ' + (resData.error || 'Не удалось отправить заявку'));
+                }
+            } catch (err) {
+                this.submitting = false;
+                alert('Произошла сетевая ошибка при отправке заявки');
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

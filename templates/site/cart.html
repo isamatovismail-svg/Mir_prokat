@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Оформление заказа — Mir Prokat{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="text-center max-w-xl mx-auto mb-8">
+        <h1 class="font-serif text-3xl font-bold text-stone-900 mb-2">Корзина и оформление</h1>
+        <p class="text-stone-500 text-sm">Для быстрого автоматического расчета рекомендуем воспользоваться калькулятором мероприятия.</p>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl border border-stone-200 text-center">
+        <span class="text-5xl block mb-4">✨</span>
+        <h3 class="font-serif text-2xl font-bold text-stone-900 mb-2">Рассчитайте заказ за 1 минуту</h3>
+        <p class="text-xs text-stone-500 max-w-md mx-auto mb-6">
+            Калькулятор автоматически выберет количество стульев, столов, текстиля и проверит реальную доступность на складе на вашу дату.
+        </p>
+        <a href="{% url 'catalog:calculator' %}" class="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-stone-900 hover:bg-amber-600 text-white font-semibold text-sm transition shadow-md">
+            <span>⚡️</span> Открыть калькулятор мероприятия
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}База клиентов{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h3 class="font-bold text-stone-900 text-base">Клиентская база</h3>
+            <p class="text-xs text-stone-400">История заказов, LTV и контактные данные клиентов</p>
+        </div>
+        <form method="GET" class="w-full sm:w-80">
+            <input type="text" name="q" value="{{ q }}" placeholder="Поиск по имени или телефону..." class="w-full py-2 px-3 rounded-xl border border-stone-300 text-xs">
+        </form>
+    </div>
+
+    <!-- Clients Table (Секция 28) -->
+    <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                        <th class="py-3.5 px-4">Клиент</th>
+                        <th class="py-3.5 px-4">Телефон</th>
+                        <th class="py-3.5 px-4">Telegram</th>
+                        <th class="py-3.5 px-4 text-center">Заказов</th>
+                        <th class="py-3.5 px-4 text-right">Общая сумма</th>
+                        <th class="py-3.5 px-4">Последний заказ</th>
+                        <th class="py-3.5 px-4 text-right">Карточка</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    {% for client in clients %}
+                    <tr class="hover:bg-stone-50/60 transition">
+                        <td class="py-3.5 px-4">
+                            <div class="font-bold text-stone-900 flex items-center gap-1.5">
+                                {{ client.name }}
+                                {% if client.is_vip %}
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900">VIP</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4 text-stone-700 font-medium">
+                            {{ client.phone }}
+                        </td>
+                        <td class="py-3.5 px-4 text-sky-600">
+                            {{ client.telegram|default:"—" }}
+                        </td>
+                        <td class="py-3.5 px-4 text-center font-bold text-stone-800">
+                            {{ client.orders_count }}
+                        </td>
+                        <td class="py-3.5 px-4 text-right font-bold text-stone-900">
+                            {{ client.total_spent|floatformat:0 }} ₸
+                        </td>
+                        <td class="py-3.5 px-4 text-stone-500">
+                            {% if client.last_order %}
+                            {{ client.last_order.event_date|date:"d.m.Y" }} (#{{ client.last_order.order_number }})
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <a href="{% url 'admin_panel:client_detail' client.id %}" class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 font-semibold text-stone-700">
+                                История
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-stone-400">Клиентов не найдено</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}{% if package %}Настройка пакета: {{ package.name }}{% else %}Создание пакета{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <div class="flex items-center justify-between">
+        <a href="{% url 'admin_panel:packages_list' %}" class="text-xs text-stone-500 hover:text-stone-800">
+            ← Назад к списку пакетов
+        </a>
+    </div>
+
+    <!-- Package General Info -->
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-sm max-w-4xl">
+        <h3 class="font-bold text-stone-900 text-base mb-4 pb-2 border-b border-stone-100">Основные параметры пакета</h3>
+        <form method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_package">
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block font-semibold text-stone-700 mb-1">Название пакета *</label>
+                    <input type="text" name="name" required value="{{ package.name|default:'' }}" class="w-full py-2 px-3 rounded-xl border border-stone-300 text-xs">
+                </div>
+                <div>
+                    <label class="block font-semibold text-stone-700 mb-1">Уровень (Tier)</label>
+                    <select name="tier" class="w-full py-2 px-3 rounded-xl border border-stone-300 text-xs font-semibold">
+                        <option value="basic" {% if package.tier == 'basic' %}selected{% endif %}>BASIC</option>
+                        <option value="standard" {% if package.tier == 'standard' %}selected{% endif %}>STANDARD</option>
+                        <option value="premium" {% if package.tier == 'premium' %}selected{% endif %}>PREMIUM</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-stone-700 mb-1">Фиксированная цена (₸, если есть)</label>
+                    <input type="number" step="0.01" name="base_price_override" value="{{ package.base_price_override|default:'' }}" class="w-full py-2 px-3 rounded-xl border border-stone-300 text-xs" placeholder="Автоматически из товаров">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-stone-700 mb-1">Описание пакета</label>
+                <textarea name="description" rows="2" class="w-full p-2.5 rounded-xl border border-stone-300 text-xs">{{ package.description|default:'' }}</textarea>
+            </div>
+
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-stone-800">
+                <input type="checkbox" name="is_active" {% if package.is_active or not package %}checked{% endif %} class="w-4 h-4 rounded text-amber-600">
+                <span>Пакет активен для выбора клиентами на сайте</span>
+            </label>
+
+            <button type="submit" class="px-5 py-2 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800">
+                Сохранить параметры пакета
+            </button>
+        </form>
+    </div>
+
+    {% if package %}
+    <!-- Composition & Calculation Rules Table (Секция 7 & 22) -->
+    <div class="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-sm max-w-4xl">
+        <div class="flex items-center justify-between mb-4 pb-2 border-b border-stone-100">
+            <div>
+                <h3 class="font-bold text-stone-900 text-base">Правила расчёта количества товаров</h3>
+                <p class="text-xs text-stone-400">Например: 1 стол на 10 гостей (0.1), 1 стул на гостя (1.0), 2 бокала на гостя (2.0)</p>
+            </div>
+        </div>
+
+        <!-- Existing Items -->
+        <div class="overflow-x-auto mb-6">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                        <th class="py-2.5 px-3">Товар</th>
+                        <th class="py-2.5 px-3 text-center">Коэфф. на 1 гостя</th>
+                        <th class="py-2.5 px-3 text-center">Мин. кол-во</th>
+                        <th class="py-2.5 px-3 text-center">Пример на 100 гостей</th>
+                        <th class="py-2.5 px-3 text-right">Удалить</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    {% for itm in package.items.all %}
+                    <tr>
+                        <td class="py-3 px-3 font-semibold text-stone-900">{{ itm.product.name }}</td>
+                        <td class="py-3 px-3 text-center font-bold text-amber-800">{{ itm.quantity_per_guest }}</td>
+                        <td class="py-3 px-3 text-center">{{ itm.min_quantity }} шт.</td>
+                        <td class="py-3 px-3 text-center font-bold text-stone-800">{{ itm.get_quantity_for_guests:100 }} шт.</td>
+                        <td class="py-3 px-3 text-right">
+                            <form method="POST" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_item">
+                                <input type="hidden" name="item_id" value="{{ itm.id }}">
+                                <button type="submit" class="text-rose-500 hover:text-rose-700 font-bold">✕</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-4 text-center text-stone-400">В этом пакете пока нет товаров</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add Item Rule Form -->
+        <div class="p-4 bg-stone-50 rounded-xl border border-stone-200">
+            <h4 class="font-bold text-stone-900 text-xs mb-3">+ Добавить позицию и правило в пакет:</h4>
+            <form method="POST" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end text-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_item">
+
+                <div class="sm:col-span-2">
+                    <label class="block font-semibold text-stone-700 mb-1">Товар:</label>
+                    <select name="product_id" required class="w-full py-2 px-3 rounded-lg border border-stone-300 text-xs">
+                        {% for p in all_products %}
+                        <option value="{{ p.id }}">{{ p.name }} ({{ p.rental_price|floatformat:0 }} ₸)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-stone-700 mb-1" title="0.1 = 1 на 10 человек, 1 = 1 на человека">Коэфф. на гостя:</label>
+                    <input type="number" step="0.01" name="quantity_per_guest" value="1.0" required class="w-full py-2 px-3 rounded-lg border border-stone-300 text-xs font-bold text-center">
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full py-2 px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-lg font-bold text-xs">
+                        Добавить правило
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

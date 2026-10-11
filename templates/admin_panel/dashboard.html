@@ -1,0 +1,156 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}Дашборд управляющего{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <!-- KPI Cards (Секция 17 ТЗ) -->
+    <div>
+        <div class="text-xs uppercase tracking-wider font-bold text-stone-400 mb-3">Сегодня, {{ today|date:"d E Y" }}</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- New orders -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-stone-500">Новые заявки</span>
+                    <div class="text-3xl font-bold text-amber-600 mt-1">{{ new_orders_count }}</div>
+                    <a href="{% url 'admin_panel:orders_list' %}?status=NEW" class="text-[11px] text-amber-700 font-semibold hover:underline mt-1 block">Требуют обработки →</a>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl">
+                    🔔
+                </div>
+            </div>
+
+            <!-- Active orders -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-stone-500">Активные заказы</span>
+                    <div class="text-3xl font-bold text-blue-600 mt-1">{{ active_orders_count }}</div>
+                    <span class="text-[11px] text-stone-400 mt-1 block">В работе / оплачены</span>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl">
+                    📦
+                </div>
+            </div>
+
+            <!-- Events today -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-stone-500">Мероприятия сегодня</span>
+                    <div class="text-3xl font-bold text-emerald-600 mt-1">{{ events_today_count }}</div>
+                    <span class="text-[11px] text-stone-400 mt-1 block">Выдача и монтаж</span>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">
+                    🎉
+                </div>
+            </div>
+
+            <!-- Warehouse load -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-stone-500">Товаров занято</span>
+                    <div class="text-3xl font-bold text-stone-900 mt-1">{{ stock_load_percent }}%</div>
+                    <a href="{% url 'admin_panel:warehouse' %}" class="text-[11px] text-stone-500 hover:text-stone-900 mt-1 block">Загрузка склада →</a>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-stone-100 text-stone-800 flex items-center justify-center text-2xl">
+                    📊
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low stock warning alert (Секция 19) -->
+    {% if low_stock_products %}
+    <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">⚠️</span>
+            <div>
+                <h4 class="font-bold text-amber-900 text-xs">Внимание: товары ниже минимального остатка на складе!</h4>
+                <div class="text-xs text-amber-800 mt-0.5">
+                    {% for p in low_stock_products %}
+                    <span class="mr-2"><b>{{ p.name }}</b> (остаток {{ p.available_quantity }} при минимуме {{ p.min_stock }})</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <a href="{% url 'admin_panel:warehouse' %}" class="px-3.5 py-1.5 rounded-xl bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 whitespace-nowrap">
+            На склад
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Recent Orders Table (Секция 18 ТЗ) -->
+    <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+        <div class="p-5 border-b border-stone-200 flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-stone-900 text-base">Последние заказы</h3>
+                <p class="text-xs text-stone-400">Свежие заявки от клиентов через сайт и Telegram-бота</p>
+            </div>
+            <a href="{% url 'admin_panel:orders_list' %}" class="text-xs font-semibold text-amber-700 hover:text-amber-800">
+                Все заказы ({{ recent_orders.count }}) →
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                        <th class="py-3 px-4">№ Заказа</th>
+                        <th class="py-3 px-4">Клиент</th>
+                        <th class="py-3 px-4">Дата события</th>
+                        <th class="py-3 px-4">Гостей / Пакет</th>
+                        <th class="py-3 px-4 text-right">Сумма</th>
+                        <th class="py-3 px-4 text-center">Статус</th>
+                        <th class="py-3 px-4 text-right">Действие</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    {% for order in recent_orders %}
+                    <tr class="hover:bg-stone-50/60 transition">
+                        <td class="py-3.5 px-4 font-bold text-stone-900">
+                            <a href="{% url 'admin_panel:order_detail' order.id %}" class="hover:text-amber-600">
+                                #{{ order.order_number }}
+                            </a>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div class="font-semibold text-stone-800">{{ order.client.name }}</div>
+                            <div class="text-[11px] text-stone-400">{{ order.client.phone }}</div>
+                        </td>
+                        <td class="py-3.5 px-4 font-medium text-stone-800">
+                            {{ order.event_date|date:"d.m.Y" }}
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div>{{ order.guest_count }} гостей</div>
+                            <div class="text-[11px] text-amber-800 font-medium">{{ order.package.name|default:"Набор" }}</div>
+                        </td>
+                        <td class="py-3.5 px-4 text-right font-bold text-stone-900">
+                            {{ order.total_price|floatformat:0 }} ₸
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold
+                                {% if order.status == 'NEW' %}bg-amber-100 text-amber-900
+                                {% elif order.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-900
+                                {% elif order.status == 'PAID' %}bg-emerald-600 text-white
+                                {% elif order.status == 'CANCELLED' %}bg-rose-100 text-rose-900
+                                {% else %}bg-blue-100 text-blue-900{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <a href="{% url 'admin_panel:order_detail' order.id %}" class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 font-semibold text-stone-700 transition">
+                                Открыть
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-stone-400">Заказов пока нет</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

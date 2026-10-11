@@ -1,0 +1,282 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}Заказ #{{ order.order_number }}{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <!-- Top Action Header -->
+    <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3 mb-1">
+                <span class="text-xs uppercase tracking-wider font-bold text-stone-400">Управление заказом</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold
+                    {% if order.status == 'NEW' %}bg-amber-100 text-amber-900
+                    {% elif order.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-900
+                    {% elif order.status == 'PAID' %}bg-emerald-600 text-white
+                    {% elif order.status == 'CANCELLED' %}bg-rose-100 text-rose-900
+                    {% else %}bg-blue-100 text-blue-900{% endif %}">
+                    {{ order.get_status_display }}
+                </span>
+                {% if order.is_reserved %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">
+                    🔒 Склад зарезервирован
+                </span>
+                {% endif %}
+            </div>
+            <h1 class="text-2xl font-bold text-stone-900">#{{ order.order_number }} — {{ order.client.name }}</h1>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a href="{% url 'orders:order_detail' order.order_number %}" target="_blank" class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold">
+                Клиентская ссылка ↗
+            </a>
+            <a href="tel:{{ order.client.phone }}" class="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold">
+                📞 Позвонить
+            </a>
+            {% if order.client.telegram %}
+            <a href="https://t.me/{{ order.client.telegram|cut:'@' }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold">
+                ✈️ Telegram
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Warehouse Stock Status Alert (Секция 23 & 45) -->
+    <div class="p-5 rounded-2xl border {% if is_available %}bg-emerald-50 border-emerald-200 text-emerald-900{% else %}bg-rose-50 border-rose-200 text-rose-900{% endif %}">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">{% if is_available %}✅{% else %}❌{% endif %}</span>
+                <div>
+                    <h4 class="font-bold text-sm">
+                        {% if is_available %}
+                        Проверка склада на {{ order.event_date|date:"d.m.Y" }}: Все позиции доступны для резерва!
+                        {% else %}
+                        Внимание: Недостаточно товара на складе для подтверждения этого заказа!
+                        {% endif %}
+                    </h4>
+                    {% if not is_available %}
+                    <div class="text-xs text-rose-800 mt-1">
+                        Дефицит:
+                        {% for iss in issues %}
+                        <b>{{ iss.product.name }}</b> (запрошено {{ iss.requested }}, доступно {{ iss.available }});
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <span class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full {% if is_available %}bg-emerald-200 text-emerald-900{% else %}bg-rose-200 text-rose-900{% endif %}">
+                {% if is_available %}Доступно{% else %}Дефицит{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Two-column Grid: Left (Items & Logistics), Right (Status Control & Finances) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left Column: Items and Details -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Order Composition (Секция 16) -->
+            <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+                <div class="p-5 border-b border-stone-200 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-stone-900 text-sm">Состав заказа на аренду</h3>
+                        <p class="text-xs text-stone-400">Количество позиций рассчитано на {{ order.guest_count }} гостей</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-stone-100 text-stone-700">
+                        {{ order.items.count }} товаров
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                                <th class="py-3 px-4">Товар</th>
+                                <th class="py-3 px-4 text-center">Количество</th>
+                                <th class="py-3 px-4 text-right">Тариф</th>
+                                <th class="py-3 px-4 text-right">Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-100">
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td class="py-3 px-4 font-semibold text-stone-900">{{ item.product.name }}</td>
+                                <td class="py-3 px-4 text-center font-bold">{{ item.quantity }} шт.</td>
+                                <td class="py-3 px-4 text-right text-stone-500">{{ item.rental_price|floatformat:0 }} ₸</td>
+                                <td class="py-3 px-4 text-right font-bold text-stone-900">{{ item.total_price|floatformat:0 }} ₸</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-stone-400">Позиций нет</td>
+                            </tr>
+                            {% endfor %}
+
+                            {% for srv in order.services.all %}
+                            <tr class="bg-amber-50/40 text-amber-950">
+                                <td class="py-3 px-4 font-semibold">🔧 {{ srv.service.name }}</td>
+                                <td class="py-3 px-4 text-center font-medium">1 усл.</td>
+                                <td class="py-3 px-4 text-right text-stone-500">{{ srv.price|floatformat:0 }} ₸</td>
+                                <td class="py-3 px-4 text-right font-bold">{{ srv.total_price|floatformat:0 }} ₸</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Logistics and Client Info -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-4">
+                <h3 class="font-bold text-stone-900 text-sm pb-2 border-b border-stone-100">Детали мероприятия и доставка</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <span class="text-stone-400 block mb-1">Адрес доставки:</span>
+                        <div class="font-medium text-stone-800">{{ order.address|default:"Не указан / уточняется" }}</div>
+                        <div class="mt-2 text-stone-500">
+                            Зона доставки: <b>{{ order.delivery_zone.name|default:"Стандарт" }}</b> ({{ order.delivery_price|floatformat:0 }} ₸)
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-stone-400 block mb-1">Монтажные работы:</span>
+                        <div>Монтаж: <b>{% if order.need_setup %}Да (требуется){% else %}Нет{% endif %}</b></div>
+                        <div>Демонтаж: <b>{% if order.need_teardown %}Да (требуется){% else %}Нет{% endif %}</b></div>
+                    </div>
+                </div>
+
+                {% if order.comment %}
+                <div class="pt-3 border-t border-stone-100 text-xs">
+                    <span class="text-stone-400 block mb-1">Комментарий клиента:</span>
+                    <div class="p-3 bg-stone-50 rounded-xl text-stone-700 italic">«{{ order.comment }}»</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Status History Timeline -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-stone-900 text-sm mb-4 pb-2 border-b border-stone-100">История изменений статусов</h3>
+                <div class="space-y-3">
+                    {% for h in order.status_history.all %}
+                    <div class="flex items-start gap-3 text-xs">
+                        <div class="w-2 h-2 rounded-full bg-amber-500 mt-1.5 flex-shrink-0"></div>
+                        <div class="flex-grow">
+                            <div class="font-semibold text-stone-800">
+                                {% if h.old_status %}{{ h.old_status }} → {% endif %}<b>{{ h.new_status }}</b>
+                                {% if h.changed_by %}<span class="text-stone-400 font-normal">({{ h.changed_by.username }})</span>{% endif %}
+                            </div>
+                            {% if h.comment %}
+                            <div class="text-stone-500 text-[11px] mt-0.5">«{{ h.comment }}»</div>
+                            {% endif %}
+                        </div>
+                        <div class="text-[10px] text-stone-400 whitespace-nowrap">{{ h.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="text-xs text-stone-400">История изменений пуста</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Status Change & Finances -->
+        <div class="space-y-6">
+
+            <!-- Status Control Form (Секции 24 & 44) -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-stone-900 text-sm mb-3">Смена статуса заказа</h3>
+                <form method="POST" class="space-y-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_status">
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Новый статус:</label>
+                        <select name="status" class="w-full py-2.5 px-3 rounded-xl border border-stone-300 text-xs font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            {% for code, label in status_choices %}
+                            <option value="{{ code }}" {% if order.status == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Комментарий к смене:</label>
+                        <input type="text" name="status_comment" placeholder="Причина или заметка..." class="w-full py-2 px-3 rounded-xl border border-stone-300 text-xs">
+                    </div>
+
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-stone-700 font-medium pt-1">
+                        <input type="checkbox" name="notify_client" checked class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
+                        <span>Отправить уведомление клиенту в Telegram</span>
+                    </label>
+
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs transition">
+                        Применить новый статус
+                    </button>
+                </form>
+            </div>
+
+            <!-- Financial Card (Секция 25 ТЗ) -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-stone-900 text-sm pb-2 border-b border-stone-100 mb-4">Финансы и оплата</h3>
+
+                <div class="space-y-2 text-xs mb-4 text-stone-600">
+                    <div class="flex justify-between">
+                        <span>Аренда товаров:</span>
+                        <span class="font-semibold text-stone-900">{{ order.items_price|floatformat:0 }} ₸</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Доставка:</span>
+                        <span class="font-semibold text-stone-900">{{ order.delivery_price|floatformat:0 }} ₸</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Услуги (монтаж/декор):</span>
+                        <span class="font-semibold text-stone-900">{{ order.services_price|floatformat:0 }} ₸</span>
+                    </div>
+                    <div class="flex justify-between text-amber-900">
+                        <span>Залог (возвратный):</span>
+                        <span class="font-semibold">{{ order.deposit_price|floatformat:0 }} ₸</span>
+                    </div>
+                    <div class="pt-2 border-t border-stone-200 flex justify-between font-bold text-sm text-stone-900">
+                        <span>Итого к оплате:</span>
+                        <span>{{ order.total_price|floatformat:0 }} ₸</span>
+                    </div>
+                </div>
+
+                <!-- Payment Update Form -->
+                <form method="POST" class="pt-3 border-t border-stone-100 space-y-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_payment">
+                    <label class="block text-[11px] font-semibold text-stone-700">Внесенная оплата (₸):</label>
+                    <div class="flex gap-2">
+                        <input type="number" name="paid_amount" value="{{ order.paid_amount|floatformat:0 }}" class="w-full py-2 px-3 rounded-xl border border-stone-300 text-xs font-bold">
+                        <button type="submit" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold whitespace-nowrap">
+                            Сохранить
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4 p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs flex justify-between font-semibold">
+                    <span>Остаток к доплате:</span>
+                    <span class="{% if order.remaining_amount > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                        {{ order.remaining_amount|floatformat:0 }} ₸
+                    </span>
+                </div>
+            </div>
+
+            <!-- Manager Notes -->
+            <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                <h3 class="font-bold text-stone-900 text-sm mb-2">Заметка менеджера</h3>
+                <form method="POST" class="space-y-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_notes">
+                    <textarea name="manager_comment" rows="3" placeholder="Внутренний комментарий (клиент его не видит)..." class="w-full p-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">{{ order.manager_comment }}</textarea>
+                    <button type="submit" class="w-full py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold">
+                        Сохранить заметку
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Контакты — Mir Prokat{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+    <div class="text-center max-w-2xl mx-auto mb-14">
+        <span class="text-xs uppercase tracking-widest font-bold text-amber-700">Всегда на связи</span>
+        <h1 class="font-serif text-3xl sm:text-4xl font-bold text-stone-900 mt-1 mb-3">Контакты и склад</h1>
+        <p class="text-stone-500 text-sm">Свяжитесь с нами удобным способом или оформите заявку онлайн.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <div class="bg-white p-8 rounded-3xl border border-stone-200/80 shadow-sm space-y-6">
+            <div>
+                <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">Главный офис и шоурум:</span>
+                <p class="text-stone-900 font-semibold text-base mt-1">г. Алматы, ул. Достык 180</p>
+                <p class="text-xs text-stone-500 mt-0.5">Ежедневно с 09:00 до 20:00</p>
+            </div>
+
+            <div class="pt-4 border-t border-stone-100">
+                <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">Телефоны:</span>
+                <p class="text-stone-900 font-bold text-lg mt-1"><a href="tel:+77771234567" class="hover:text-amber-700">+7 (777) 123-45-67</a></p>
+                <p class="text-stone-900 font-bold text-lg"><a href="tel:+77015558899" class="hover:text-amber-700">+7 (701) 555-88-99</a></p>
+            </div>
+
+            <div class="pt-4 border-t border-stone-100">
+                <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">Мессенджеры:</span>
+                <div class="mt-2 flex gap-3">
+                    <a href="https://t.me/mir_prokat_bot" target="_blank" class="px-4 py-2.5 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 transition flex items-center gap-2">
+                        <span>✈️</span> Telegram-бот @mir_prokat_bot
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-stone-900 text-white p-8 rounded-3xl flex flex-col justify-between">
+            <div>
+                <span class="text-amber-400 text-xs font-bold uppercase tracking-wider">Склад и самовывоз</span>
+                <h3 class="font-serif text-2xl font-bold mt-2 mb-4">Выдача и возврат инвентаря</h3>
+                <p class="text-xs text-stone-300 leading-relaxed mb-6">
+                    Самовывоз оборудования возможен по предварительному согласованию с менеджером. Проверка комплектности и чистоты осуществляется на складе при выдаче.
+                </p>
+                <div class="p-4 bg-stone-800/80 rounded-2xl border border-stone-700/60 text-xs text-stone-300 space-y-2">
+                    <div>🚚 <b>Служба доставки:</b> ежедневно с 07:00 до 23:00</div>
+                    <div>📦 <b>Склад самовывоза:</b> ежедневно с 09:00 до 19:00</div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-stone-800">
+                <a href="{% url 'catalog:calculator' %}" class="w-full block text-center py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-sm transition">
+                    Оформить предварительный расчёт
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

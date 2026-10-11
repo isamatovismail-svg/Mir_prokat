@@ -1,0 +1,99 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}Все заказы{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <!-- Filters & Search Bar -->
+    <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+        <form method="GET" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
+            <!-- Search -->
+            <div class="sm:col-span-2">
+                <input type="text" name="q" value="{{ search_q }}" placeholder="Поиск по номеру #ORD, клиенту или телефону..." class="w-full py-2.5 px-3.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+
+            <!-- Status filter -->
+            <div>
+                <select name="status" onchange="this.form.submit()" class="w-full py-2.5 px-3 rounded-xl border border-stone-300 text-xs">
+                    <option value="">Все статусы</option>
+                    {% for code, label in status_choices %}
+                    <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="date" name="date" value="{{ date_filter }}" class="w-full py-2 px-3 rounded-xl border border-stone-300 text-xs">
+                <button type="submit" class="px-4 py-2.5 bg-stone-900 text-white rounded-xl text-xs font-semibold hover:bg-stone-800">
+                    Найти
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Orders Table (Секция 18 ТЗ) -->
+    <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                        <th class="py-3.5 px-4">№</th>
+                        <th class="py-3.5 px-4">Клиент</th>
+                        <th class="py-3.5 px-4">Дата события</th>
+                        <th class="py-3.5 px-4">Комплект</th>
+                        <th class="py-3.5 px-4 text-right">Сумма</th>
+                        <th class="py-3.5 px-4 text-center">Статус</th>
+                        <th class="py-3.5 px-4 text-right">Действие</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    {% for order in orders %}
+                    <tr class="hover:bg-stone-50/60 transition">
+                        <td class="py-3.5 px-4 font-bold text-stone-900">
+                            <a href="{% url 'admin_panel:order_detail' order.id %}" class="hover:text-amber-600">
+                                #{{ order.order_number }}
+                            </a>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div class="font-semibold text-stone-800">{{ order.client.name }}</div>
+                            <div class="text-[11px] text-stone-400">{{ order.client.phone }}</div>
+                        </td>
+                        <td class="py-3.5 px-4 font-medium text-stone-800">
+                            {{ order.event_date|date:"d.m.Y" }}
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div>{{ order.guest_count }} гостей</div>
+                            <div class="text-[11px] text-stone-400">{{ order.package.name|default:"Индивидуальный" }}</div>
+                        </td>
+                        <td class="py-3.5 px-4 text-right font-bold text-stone-900">
+                            {{ order.total_price|floatformat:0 }} ₸
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold
+                                {% if order.status == 'NEW' %}bg-amber-100 text-amber-900
+                                {% elif order.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-900
+                                {% elif order.status == 'PAID' %}bg-emerald-600 text-white
+                                {% elif order.status == 'CANCELLED' %}bg-rose-100 text-rose-900
+                                {% else %}bg-blue-100 text-blue-900{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <a href="{% url 'admin_panel:order_detail' order.id %}" class="px-3.5 py-1.5 rounded-lg bg-stone-900 text-white font-semibold hover:bg-stone-800 transition">
+                                Управление
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-stone-400">Заказов по заданным фильтрам не найдено</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

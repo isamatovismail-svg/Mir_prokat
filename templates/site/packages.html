@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Готовые пакеты для мероприятий — Mir Prokat{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="{ guests: {{ sample_guests }} }">
+
+    <div class="text-center max-w-2xl mx-auto mb-12">
+        <span class="text-xs uppercase tracking-widest font-bold text-amber-700">Готовые решения</span>
+        <h1 class="font-serif text-3xl sm:text-4xl font-bold text-stone-900 mt-1 mb-3">
+            Пакеты оборудования для мероприятий
+        </h1>
+        <p class="text-stone-500 text-sm">
+            Выберите готовый комплект — все пропорции стульев, столов, текстиля и посуды пересчитываются автоматически под ваше количество персон.
+        </p>
+
+        <!-- Guest Selector Pills -->
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <span class="text-xs font-semibold text-stone-500 mr-2">Укажите число гостей:</span>
+            <template x-for="g in [20, 50, 70, 100, 150, 200]">
+                <button type="button"
+                        @click="guests = g"
+                        :class="guests === g ? 'bg-stone-900 text-white' : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'"
+                        class="px-4 py-2 rounded-full text-xs font-bold transition shadow-sm"
+                        x-text="g + ' чел.'"></button>
+            </template>
+        </div>
+    </div>
+
+    <!-- Packages Cards Grid (Секция 6) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        {% for item in package_data %}
+        {% with pkg=item.package %}
+        <div class="rounded-3xl border {% if pkg.is_featured %}border-amber-400 ring-2 ring-amber-400/20 bg-amber-50/20 shadow-md{% else %}border-stone-200 bg-white{% endif %} p-8 flex flex-col justify-between hover:shadow-xl transition-all relative">
+            {% if pkg.is_featured %}
+            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-600 text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-sm">
+                Самый популярный
+            </span>
+            {% endif %}
+
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-amber-700">{{ pkg.get_tier_display }}</span>
+                    <span class="text-3xl">
+                        {% if pkg.tier == 'basic' %}🌿{% elif pkg.tier == 'standard' %}🌟{% else %}👑{% endif %}
+                    </span>
+                </div>
+                <h3 class="font-serif text-2xl font-bold text-stone-900 mb-2">{{ pkg.name }}</h3>
+                <p class="text-xs text-stone-500 mb-6 leading-relaxed">{{ pkg.description }}</p>
+
+                <!-- Detailed Included Items (calculated dynamically based on guests) -->
+                <div class="space-y-2 text-xs text-stone-700 pb-6 mb-6 border-b border-stone-200">
+                    <div class="font-bold text-stone-900 text-[11px] uppercase tracking-wider mb-2">Состав пакета (на <span x-text="guests"></span> гостей):</div>
+                    <div class="flex justify-between">
+                        <span>🪑 Банкетные стулья</span>
+                        <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>🪵 Столы круглые (d=180 см)</span>
+                        <span class="font-bold"><span x-text="Math.ceil(guests / 10)"></span> шт.</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>🍽 Тарелки подстановочные</span>
+                        <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>🍴 Комплекты столовых приборов</span>
+                        <span class="font-bold"><span x-text="guests"></span> компл.</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>🥛 Стаканы хайбол</span>
+                        <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>🧵 Скатерти белые в пол</span>
+                        <span class="font-bold"><span x-text="Math.ceil(guests / 10)"></span> шт.</span>
+                    </div>
+                    {% if pkg.tier == 'standard' or pkg.tier == 'premium' %}
+                    <div class="flex justify-between text-amber-800">
+                        <span>🥂 Бокалы для вина</span>
+                        <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                    </div>
+                    <div class="flex justify-between text-amber-800">
+                        <span>✨ Тканевые салфетки</span>
+                        <span class="font-bold"><span x-text="guests"></span> шт.</span>
+                    </div>
+                    <div class="flex justify-between text-amber-800">
+                        <span>💐 Цветочные стойки</span>
+                        <span class="font-bold"><span x-text="Math.ceil(guests / 10)"></span> шт.</span>
+                    </div>
+                    {% endif %}
+                    {% if pkg.tier == 'premium' %}
+                    <div class="flex justify-between text-amber-900 font-medium">
+                        <span>👑 Золотые стулья Кьявари</span>
+                        <span class="font-bold">Включено</span>
+                    </div>
+                    <div class="flex justify-between text-amber-900 font-medium">
+                        <span>🌸 Свадебная арка</span>
+                        <span class="font-bold">1 шт.</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div class="mb-4">
+                    <span class="text-[11px] text-stone-400">Стоимость на <span x-text="guests"></span> человек:</span>
+                    <div class="text-2xl font-serif font-bold text-stone-900">
+                        {% if pkg.tier == 'basic' %}
+                        <span x-text="(guests * 1100).toLocaleString()"></span> ₸
+                        {% elif pkg.tier == 'standard' %}
+                        <span x-text="(guests * 1550).toLocaleString()"></span> ₸
+                        {% else %}
+                        <span x-text="(guests * 2300 + 15000).toLocaleString()"></span> ₸
+                        {% endif %}
+                    </div>
+                </div>
+
+                <a :href="'{% url 'catalog:calculator' %}?package_id={{ pkg.id }}&guests=' + guests"
+                   class="w-full block text-center py-3.5 rounded-2xl font-semibold text-sm transition {% if pkg.is_featured %}bg-amber-600 hover:bg-amber-700 text-white shadow-md{% else %}bg-stone-900 hover:bg-stone-800 text-white{% endif %}">
+                    Выбрать этот пакет
+                </a>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}Карточка клиента: {{ client.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <a href="{% url 'admin_panel:clients_list' %}" class="text-xs text-stone-500 hover:text-stone-800">
+        ← Назад к списку клиентов
+    </a>
+
+    <!-- Client Header Card (Секция 29 ТЗ) -->
+    <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div>
+            <span class="text-xs text-stone-400 block mb-1">Имя клиента:</span>
+            <h2 class="text-xl font-bold text-stone-900">{{ client.name }}</h2>
+            <div class="mt-2 text-xs font-semibold text-stone-700">{{ client.phone }}</div>
+            {% if client.telegram %}
+            <div class="text-xs text-sky-600 mt-0.5">{{ client.telegram }}</div>
+            {% endif %}
+        </div>
+
+        <div class="p-4 bg-stone-50 rounded-xl">
+            <span class="text-xs text-stone-500">Всего заказов:</span>
+            <div class="text-2xl font-bold text-stone-900 mt-1">{{ client.orders_count }}</div>
+        </div>
+
+        <div class="p-4 bg-stone-50 rounded-xl">
+            <span class="text-xs text-stone-500">Общая сумма выкупа (LTV):</span>
+            <div class="text-2xl font-bold text-stone-900 mt-1">{{ client.total_spent|floatformat:0 }} ₸</div>
+        </div>
+
+        <div class="p-4 bg-stone-50 rounded-xl flex flex-col justify-between">
+            <span class="text-xs text-stone-500">VIP статус:</span>
+            <form method="POST">
+                {% csrf_token %}
+                <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-900">
+                    <input type="checkbox" name="is_vip" onchange="this.form.submit()" {% if client.is_vip %}checked{% endif %} class="w-4 h-4 rounded text-amber-600">
+                    <span>VIP-клиент</span>
+                </label>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manager comment for client -->
+    <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+        <h3 class="font-bold text-stone-900 text-sm mb-2">Заметка менеджера о клиенте</h3>
+        <form method="POST" class="space-y-3">
+            {% csrf_token %}
+            <input type="hidden" name="is_vip" value="{% if client.is_vip %}1{% endif %}">
+            <textarea name="comment" rows="2" placeholder="Особенности клиента, предпочтения по посуде..." class="w-full p-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">{{ client.comment }}</textarea>
+            <button type="submit" class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold">
+                Сохранить заметку
+            </button>
+        </form>
+    </div>
+
+    <!-- Client Orders History -->
+    <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+        <div class="p-5 border-b border-stone-200">
+            <h3 class="font-bold text-stone-900 text-base">История заказов клиента</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                        <th class="py-3 px-4">№ Заказа</th>
+                        <th class="py-3 px-4">Дата события</th>
+                        <th class="py-3 px-4">Гостей</th>
+                        <th class="py-3 px-4">Пакет</th>
+                        <th class="py-3 px-4 text-right">Сумма</th>
+                        <th class="py-3 px-4 text-center">Статус</th>
+                        <th class="py-3 px-4 text-right">Перейти</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    {% for ord in client.orders.all %}
+                    <tr class="hover:bg-stone-50/60 transition">
+                        <td class="py-3 px-4 font-bold text-stone-900">#{{ ord.order_number }}</td>
+                        <td class="py-3 px-4 font-medium">{{ ord.event_date|date:"d.m.Y" }}</td>
+                        <td class="py-3 px-4">{{ ord.guest_count }} чел.</td>
+                        <td class="py-3 px-4">{{ ord.package.name|default:"—" }}</td>
+                        <td class="py-3 px-4 text-right font-bold text-stone-900">{{ ord.total_price|floatformat:0 }} ₸</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-stone-800">
+                                {{ ord.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <a href="{% url 'admin_panel:order_detail' ord.id %}" class="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 rounded font-semibold text-stone-700">
+                                Открыть
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-6 text-center text-stone-400">У клиента пока нет заказов</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Как это работает — Mir Prokat{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+    <div class="text-center max-w-2xl mx-auto mb-16">
+        <span class="text-xs uppercase tracking-widest font-bold text-amber-700">Прозрачный процесс</span>
+        <h1 class="font-serif text-3xl sm:text-4xl font-bold text-stone-900 mt-1 mb-4">
+            Как работает аренда в Mir Prokat
+        </h1>
+        <p class="text-stone-500 text-sm">
+            Мы сделали процесс подбора и бронирования банкетного оборудования максимально простым и надежным — от онлайн-расчета до возврата.
+        </p>
+    </div>
+
+    <!-- 4 Steps (Секция 38 ТЗ) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        <div class="bg-white p-8 rounded-3xl border border-stone-200/80 shadow-sm flex gap-5">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-serif font-bold text-xl flex-shrink-0">
+                1
+            </div>
+            <div>
+                <h3 class="font-serif text-xl font-bold text-stone-900 mb-2">Выбираете дату</h3>
+                <p class="text-xs text-stone-500 leading-relaxed">
+                    Указываете дату проведения мероприятия. Наша система в реальном времени проверяет физические остатки на складе, исключая двойные бронирования.
+                </p>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl border border-stone-200/80 shadow-sm flex gap-5">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-serif font-bold text-xl flex-shrink-0">
+                2
+            </div>
+            <div>
+                <h3 class="font-serif text-xl font-bold text-stone-900 mb-2">Выбираете количество гостей</h3>
+                <p class="text-xs text-stone-500 leading-relaxed">
+                    Система автоматически рассчитывает точное количество стульев, столов, приборов, скатертей и посуды по стандарту ресторанной рассадки.
+                </p>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl border border-stone-200/80 shadow-sm flex gap-5">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-serif font-bold text-xl flex-shrink-0">
+                3
+            </div>
+            <div>
+                <h3 class="font-serif text-xl font-bold text-stone-900 mb-2">Выбираете комплект</h3>
+                <p class="text-xs text-stone-500 leading-relaxed">
+                    Вы можете выбрать готовый сбалансированный пакет (BASIC, STANDARD, PREMIUM) или собрать индивидуальный заказ из каталога.
+                </p>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl border border-stone-200/80 shadow-sm flex gap-5">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-serif font-bold text-xl flex-shrink-0">
+                4
+            </div>
+            <div>
+                <h3 class="font-serif text-xl font-bold text-stone-900 mb-2">Подтверждаем заказ</h3>
+                <p class="text-xs text-stone-500 leading-relaxed">
+                    Менеджер мгновенно получает заявку в Telegram, бронирует инвентарь на складе, согласовывает время доставки и монтажа.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rental Rules & FAQ -->
+    <div class="bg-stone-900 text-white rounded-3xl p-8 sm:p-12 mb-16">
+        <h2 class="font-serif text-2xl font-bold mb-6 text-amber-400">Правила аренды и залог</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-stone-300 leading-relaxed">
+            <div>
+                <h4 class="font-bold text-white text-sm mb-2">Срок проката</h4>
+                <p>Стандартный тариф включает 1 сутки (24 часа) аренды. Доставка осуществляется накануне или в день мероприятия, вывоз — на следующий день.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-white text-sm mb-2">Возвратный залог</h4>
+                <p>Залог вносится при передаче оборудования и возвращается в полном объеме после проверки целостности инвентаря.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-white text-sm mb-2">Чистота и упаковка</h4>
+                <p>Посуда передается вымытой и упакованной. Текстиль отглажен в защитных чехлах. Мы сами моем посуду после банкета при заказе услуги уборки.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'catalog:calculator' %}" class="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-base transition shadow-lg">
+            <span>⚡️</span> Перейти к калькулятору
+        </a>
+    </div>
+
+</div>
+{% endblock %}

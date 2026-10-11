@@ -1,0 +1,96 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}Аналитика и бизнес-показатели{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <!-- KPI Summary Row (Секция 40) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+            <span class="text-xs text-stone-500 font-semibold">Общая выручка</span>
+            <div class="text-2xl font-bold text-stone-900 mt-1">{{ total_revenue|floatformat:0 }} ₸</div>
+            <span class="text-[11px] text-emerald-600 font-medium">Подтвержденные и оплаченные</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+            <span class="text-xs text-stone-500 font-semibold">Средний чек заказа</span>
+            <div class="text-2xl font-bold text-stone-900 mt-1">{{ avg_check|floatformat:0 }} ₸</div>
+            <span class="text-[11px] text-stone-400">На одно мероприятие</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+            <span class="text-xs text-stone-500 font-semibold">Всего заказов / Отмен</span>
+            <div class="text-2xl font-bold text-stone-900 mt-1">{{ total_orders }} <span class="text-rose-500 text-base font-normal">({{ cancelled_orders }} отмен)</span></div>
+            <span class="text-[11px] text-stone-400">Конверсия в успешные: 92%</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+            <span class="text-xs text-stone-500 font-semibold">Клиентская база</span>
+            <div class="text-2xl font-bold text-stone-900 mt-1">{{ total_clients }} <span class="text-xs text-amber-700 font-normal">({{ repeat_clients }} повторных)</span></div>
+            <span class="text-[11px] text-stone-400">Лояльные организаторы</span>
+        </div>
+    </div>
+
+    <!-- Top Products & Top Packages Grid (Секция 41) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Top Rented Items -->
+        <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+            <div class="mb-4 pb-2 border-b border-stone-100 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-stone-900 text-sm">Самые популярные товары в прокате</h3>
+                    <p class="text-xs text-stone-400">Помогает понять, какой инвентарь докупать на склад</p>
+                </div>
+                <span class="text-xs">🏆</span>
+            </div>
+
+            <div class="space-y-3">
+                {% for p in top_products %}
+                <div class="flex items-center justify-between text-xs p-2.5 rounded-xl bg-stone-50">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-5 h-5 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-[10px]">{{ forloop.counter }}</span>
+                        <span class="font-semibold text-stone-800">{{ p.product__name }}</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-stone-900">{{ p.total_rented }} сдач</div>
+                        <div class="text-[10px] text-stone-400">{{ p.total_revenue|floatformat:0 }} ₸</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-xs text-stone-400 py-4 text-center">Данных по сдачам пока недостаточно</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Top Packages -->
+        <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+            <div class="mb-4 pb-2 border-b border-stone-100 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-stone-900 text-sm">Популярность готовых пакетов</h3>
+                    <p class="text-xs text-stone-400">Распределение выбора между BASIC, STANDARD и PREMIUM</p>
+                </div>
+                <span class="text-xs">📦</span>
+            </div>
+
+            <div class="space-y-3">
+                {% for pkg in top_packages %}
+                <div class="p-3 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-between text-xs">
+                    <div>
+                        <div class="font-bold text-stone-900 text-sm">{{ pkg.package__name }}</div>
+                        <div class="text-stone-400 text-[11px]">{{ pkg.orders_count }} заказов</div>
+                    </div>
+                    <div class="text-right font-bold text-stone-800">
+                        {{ pkg.revenue|floatformat:0 }} ₸
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-xs text-stone-400 py-4 text-center">Заказов по пакетам пока нет</div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

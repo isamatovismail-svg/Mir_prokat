@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Панель управления — Mir Prokat{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-stone-100 text-stone-800 antialiased min-h-screen flex flex-col md:flex-row">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-stone-900 text-stone-300 flex-shrink-0 flex flex-col justify-between min-h-screen">
+        <div>
+            <!-- Brand -->
+            <div class="h-20 flex items-center px-6 border-b border-stone-800">
+                <a href="{% url 'admin_panel:dashboard' %}" class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-bold text-lg">
+                        M
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg text-white tracking-tight">MIR PROKAT</span>
+                        <span class="block text-[10px] tracking-wider uppercase font-semibold text-amber-400">Admin Control</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="p-4 space-y-1 text-sm font-medium">
+                <a href="{% url 'admin_panel:dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if request.resolver_match.url_name == 'dashboard' %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>📊</span> Дашборд
+                </a>
+                <a href="{% url 'admin_panel:orders_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if 'order' in request.resolver_match.url_name %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>📋</span> Заказы
+                </a>
+                <a href="{% url 'admin_panel:calendar' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if request.resolver_match.url_name == 'calendar' %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>📅</span> Календарь
+                </a>
+                <a href="{% url 'admin_panel:warehouse' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if request.resolver_match.url_name == 'warehouse' %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>📦</span> Склад и остатки
+                </a>
+                <a href="{% url 'admin_panel:products_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if 'product' in request.resolver_match.url_name %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>🪑</span> Каталог товаров
+                </a>
+                <a href="{% url 'admin_panel:packages_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if 'package' in request.resolver_match.url_name %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>✨</span> Пакеты и правила
+                </a>
+                <a href="{% url 'admin_panel:clients_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if 'client' in request.resolver_match.url_name %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>👥</span> Клиенты
+                </a>
+                <a href="{% url 'admin_panel:services' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if request.resolver_match.url_name == 'services' %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>🚚</span> Доставка и услуги
+                </a>
+                <a href="{% url 'admin_panel:analytics' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {% if request.resolver_match.url_name == 'analytics' %}bg-stone-800 text-amber-400 font-bold{% else %}hover:bg-stone-800/60 hover:text-white{% endif %}">
+                    <span>📈</span> Аналитика
+                </a>
+            </nav>
+        </div>
+
+        <!-- User profile & Logout -->
+        <div class="p-4 border-t border-stone-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold text-white">{{ request.user.username }}</div>
+                    <div class="text-[10px] text-stone-400">Администратор</div>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{% url 'catalog:home' %}" target="_blank" class="p-1.5 rounded-lg bg-stone-800 text-stone-300 hover:text-white" title="Открыть сайт">
+                        🌐
+                    </a>
+                    <a href="{% url 'admin_panel:logout' %}" class="p-1.5 rounded-lg bg-stone-800 text-rose-400 hover:text-rose-300" title="Выйти">
+                        🚪
+                    </a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col min-h-screen overflow-x-hidden">
+        <!-- Top bar -->
+        <header class="h-20 bg-white border-b border-stone-200 px-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-stone-400">Mir Prokat OS /</span>
+                <h2 class="font-bold text-stone-800 text-sm">{% block page_title %}Управление прокатом{% endblock %}</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'admin_panel:product_create' %}" class="px-3.5 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-semibold hover:bg-stone-800 transition">
+                    + Добавить товар
+                </a>
+                <a href="{% url 'catalog:home' %}" target="_blank" class="text-xs text-stone-500 hover:text-stone-800">
+                    Перейти на сайт ↗
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash messages -->
+        {% if messages %}
+        <div class="px-6 pt-4">
+            {% for message in messages %}
+            <div class="p-4 rounded-xl mb-3 text-xs font-medium {% if message.tags == 'error' %}bg-rose-50 text-rose-800 border border-rose-200{% elif message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Content -->
+        <div class="p-6 flex-grow">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

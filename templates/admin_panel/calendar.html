@@ -1,0 +1,71 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}Календарь занятости оборудования{% endblock %}
+
+{% block extra_head %}
+<!-- FullCalendar CDN -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/ru.global.min.js"></script>
+<style>
+    .fc-event { cursor: pointer; border-radius: 6px; padding: 2px 4px; font-size: 11px; }
+    .fc-toolbar-title { font-size: 16px !important; font-weight: 700; color: #1c1917; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <!-- Color Legend (Секция 10 ТЗ) -->
+    <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-6">
+            <span class="font-bold text-stone-500 uppercase tracking-wider text-[10px]">Индикация статуса:</span>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                <span>Новая заявка (требует подтверждения)</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span>Подтверждено (зарезервировано)</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-700"></span>
+                <span>Оплачено</span>
+            </div>
+        </div>
+        <div class="text-stone-400">
+            Нажмите на событие для перехода в карточку заказа
+        </div>
+    </div>
+
+    <!-- Calendar Container -->
+    <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+        <div id="calendar"></div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ru',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        events: '/admin-panel/calendar/data/',
+        eventClick: function(info) {
+            if (info.event.url) {
+                window.location.href = info.event.url;
+                info.jsEvent.preventDefault();
+            }
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

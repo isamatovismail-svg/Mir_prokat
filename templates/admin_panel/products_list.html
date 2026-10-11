@@ -1,0 +1,76 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}Товары для аренды{% endblock %}
+
+{% block admin_content %}
+<div class="space-y-6">
+
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="font-bold text-stone-900 text-base">Список инвентаря</h3>
+            <p class="text-xs text-stone-400">Столы, стулья, текстиль, посуда и декорации</p>
+        </div>
+        <a href="{% url 'admin_panel:product_create' %}" class="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-semibold hover:bg-stone-800 transition">
+            + Создать новый товар
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                        <th class="py-3.5 px-4">Товар</th>
+                        <th class="py-3.5 px-4">Категория</th>
+                        <th class="py-3.5 px-4 text-center">Всего</th>
+                        <th class="py-3.5 px-4 text-center">Правило расчёта</th>
+                        <th class="py-3.5 px-4 text-right">Тариф аренды</th>
+                        <th class="py-3.5 px-4 text-right">Залог</th>
+                        <th class="py-3.5 px-4 text-center">Статус</th>
+                        <th class="py-3.5 px-4 text-right">Действие</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    {% for product in products %}
+                    <tr class="hover:bg-stone-50/60 transition">
+                        <td class="py-3.5 px-4 font-bold text-stone-900">
+                            {{ product.name }}
+                        </td>
+                        <td class="py-3.5 px-4 text-stone-600">
+                            {{ product.category.name }}
+                        </td>
+                        <td class="py-3.5 px-4 text-center font-bold text-stone-800">
+                            {{ product.total_quantity }} шт.
+                        </td>
+                        <td class="py-3.5 px-4 text-center text-stone-500">
+                            1 шт. / {{ product.guests_per_unit }} чел.
+                        </td>
+                        <td class="py-3.5 px-4 text-right font-bold text-stone-900">
+                            {{ product.rental_price|floatformat:0 }} ₸
+                        </td>
+                        <td class="py-3.5 px-4 text-right text-stone-500">
+                            {{ product.deposit|floatformat:0 }} ₸
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold {% if product.is_active %}bg-emerald-100 text-emerald-800{% else %}bg-stone-200 text-stone-600{% endif %}">
+                                {% if product.is_active %}Активен{% else %}Скрыт{% endif %}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <a href="{% url 'admin_panel:product_edit' product.id %}" class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 font-semibold text-stone-700">
+                                Редактировать
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="py-8 text-center text-stone-400">Товаров нет</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

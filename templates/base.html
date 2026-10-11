@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mir Prokat — Аренда оборудования и декора для мероприятий{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fdf8f6',
+                            100: '#f2e8e5',
+                            500: '#b45309', // warm amber-bronze
+                            600: '#92400e',
+                            800: '#451a03',
+                            900: '#1c1917',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#d97706',
+                            600: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-[#FAF9F6] text-stone-800 antialiased font-sans selection:bg-amber-100 selection:text-amber-900 flex flex-col min-h-screen" x-data="{ mobileMenu: false }">
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-50 glass-nav border-b border-stone-200/80 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'catalog:home' %}" class="flex items-center space-x-2.5">
+                        <div class="w-10 h-10 rounded-full bg-stone-900 text-amber-400 flex items-center justify-center font-serif font-bold text-xl shadow-sm">
+                            M
+                        </div>
+                        <div>
+                            <span class="font-serif font-bold text-2xl tracking-tight text-stone-900">MIR PROKAT</span>
+                            <span class="block text-[10px] tracking-widest uppercase font-semibold text-amber-700">Event Rental</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-stone-600">
+                    <a href="{% url 'catalog:home' %}" class="hover:text-amber-700 transition">Главная</a>
+                    <a href="{% url 'catalog:catalog' %}" class="hover:text-amber-700 transition">Каталог</a>
+                    <a href="{% url 'catalog:packages' %}" class="hover:text-amber-700 transition">Комплекты</a>
+                    <a href="{% url 'catalog:calculator' %}" class="text-amber-700 font-semibold hover:text-amber-800 transition flex items-center gap-1.5">
+                        <span>✨</span> Рассчитать стоимость
+                    </a>
+                    <a href="{% url 'catalog:how_it_works' %}" class="hover:text-amber-700 transition">Как это работает</a>
+                    <a href="{% url 'catalog:contacts' %}" class="hover:text-amber-700 transition">Контакты</a>
+                </nav>
+
+                <!-- Actions / Buttons -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="https://t.me/mir_prokat_bot" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 hover:bg-sky-100 transition border border-sky-200">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                        Telegram
+                    </a>
+                    <a href="{% url 'catalog:calculator' %}" class="px-5 py-2.5 rounded-full text-sm font-semibold bg-stone-900 text-white hover:bg-stone-800 transition shadow-sm hover:shadow">
+                        Рассчитать заказ
+                    </a>
+                    <a href="{% url 'admin_panel:dashboard' %}" class="text-xs text-stone-400 hover:text-stone-700 px-2 py-1">
+                        Вход в админку
+                    </a>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center space-x-2">
+                    <a href="{% url 'catalog:calculator' %}" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-600 text-white">
+                        Калькулятор
+                    </a>
+                    <button @click="mobileMenu = !mobileMenu" class="p-2 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path x-show="!mobileMenu" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            <path x-show="mobileMenu" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Menu -->
+        <div x-show="mobileMenu" x-cloak @click.away="mobileMenu = false" class="md:hidden border-b border-stone-200 bg-white px-4 pt-2 pb-6 space-y-3">
+            <a href="{% url 'catalog:home' %}" class="block py-2 text-base font-medium text-stone-800 hover:text-amber-700">Главная</a>
+            <a href="{% url 'catalog:catalog' %}" class="block py-2 text-base font-medium text-stone-800 hover:text-amber-700">Каталог оборудования</a>
+            <a href="{% url 'catalog:packages' %}" class="block py-2 text-base font-medium text-stone-800 hover:text-amber-700">Готовые комплекты</a>
+            <a href="{% url 'catalog:calculator' %}" class="block py-2 text-base font-semibold text-amber-700">✨ Рассчитать мероприятие</a>
+            <a href="{% url 'catalog:how_it_works' %}" class="block py-2 text-base font-medium text-stone-800 hover:text-amber-700">Как это работает</a>
+            <a href="{% url 'catalog:contacts' %}" class="block py-2 text-base font-medium text-stone-800 hover:text-amber-700">Контакты</a>
+            <div class="pt-4 border-t border-stone-100 flex flex-col gap-2">
+                <a href="https://t.me/mir_prokat_bot" target="_blank" class="w-full text-center py-2.5 rounded-xl bg-sky-500 text-white font-medium text-sm">
+                    Открыть в Telegram
+                </a>
+                <a href="{% url 'admin_panel:dashboard' %}" class="text-center text-xs text-stone-500 py-1">
+                    Панель администратора
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            {% for message in messages %}
+            <div class="p-4 rounded-xl mb-3 text-sm font-medium {% if message.tags == 'error' %}bg-rose-50 text-rose-800 border border-rose-200{% elif message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-stone-900 text-stone-300 pt-16 pb-12 mt-20 border-t border-stone-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-stone-800">
+                <div class="md:col-span-1">
+                    <div class="flex items-center space-x-2.5 mb-4">
+                        <div class="w-9 h-9 rounded-full bg-amber-500 text-stone-950 flex items-center justify-center font-serif font-bold text-lg">
+                            M
+                        </div>
+                        <span class="font-serif font-bold text-xl text-white tracking-tight">MIR PROKAT</span>
+                    </div>
+                    <p class="text-sm text-stone-400 leading-relaxed">
+                        Профессиональный прокат банкетной мебели, столов, стульев, посуды, текстиля и декора для любых мероприятий.
+                    </p>
+                    <div class="mt-4 flex gap-3">
+                        <a href="https://t.me/mir_prokat_bot" class="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 flex items-center justify-center text-stone-300 hover:text-white transition">
+                            ✈️
+                        </a>
+                        <a href="tel:+77771234567" class="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 flex items-center justify-center text-stone-300 hover:text-white transition">
+                            📞
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Каталог</h4>
+                    <ul class="space-y-2.5 text-sm text-stone-400">
+                        <li><a href="{% url 'catalog:catalog' %}" class="hover:text-amber-400 transition">Все товары</a></li>
+                        <li><a href="{% url 'catalog:category_products' 'stulya' %}" class="hover:text-amber-400 transition">Стулья и рассадка</a></li>
+                        <li><a href="{% url 'catalog:category_products' 'stoly' %}" class="hover:text-amber-400 transition">Столы банкетные</a></li>
+                        <li><a href="{% url 'catalog:category_products' 'posuda' %}" class="hover:text-amber-400 transition">Посуда и приборы</a></li>
+                        <li><a href="{% url 'catalog:category_products' 'tekstil' %}" class="hover:text-amber-400 transition">Скатерти и текстиль</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Сервис</h4>
+                    <ul class="space-y-2.5 text-sm text-stone-400">
+                        <li><a href="{% url 'catalog:packages' %}" class="hover:text-amber-400 transition">Готовые комплекты</a></li>
+                        <li><a href="{% url 'catalog:calculator' %}" class="hover:text-amber-400 transition">Калькулятор стоимости</a></li>
+                        <li><a href="{% url 'catalog:how_it_works' %}" class="hover:text-amber-400 transition">Правила аренды и залог</a></li>
+                        <li><a href="{% url 'catalog:contacts' %}" class="hover:text-amber-400 transition">Доставка и монтаж</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Контакты</h4>
+                    <p class="text-sm text-stone-400 mb-2">г. Алматы, ул. Достык 180</p>
+                    <p class="text-sm text-stone-400 mb-2">Телефон: <a href="tel:+77771234567" class="text-white font-medium hover:text-amber-400">+7 (777) 123-45-67</a></p>
+                    <p class="text-sm text-stone-400 mb-4">Telegram: <a href="https://t.me/mir_prokat_bot" class="text-white font-medium hover:text-amber-400">@mir_prokat_bot</a></p>
+                    <div class="p-3 rounded-xl bg-stone-800/80 border border-stone-700/50 text-xs text-stone-300">
+                        ⏰ Прием заявок на сайте и в боте: <b>24/7</b>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-500">
+                <p>© 2026 Mir Prokat. Все права защищены.</p>
+                <div class="flex space-x-6 mt-4 sm:mt-0">
+                    <a href="{% url 'catalog:how_it_works' %}" class="hover:text-stone-300">Договор оферты</a>
+                    <a href="{% url 'admin_panel:dashboard' %}" class="hover:text-stone-300">Вход для сотрудников</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

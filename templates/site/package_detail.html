@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Пакет {{ package.name }} — Mir Prokat{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="{ guests: {{ guests }} }">
+    <div class="mb-6 text-xs text-stone-500">
+        <a href="{% url 'catalog:home' %}" class="hover:text-amber-700">Главная</a> /
+        <a href="{% url 'catalog:packages' %}" class="hover:text-amber-700">Пакеты</a> /
+        <span class="text-stone-900 font-medium">{{ package.name }}</span>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-stone-200 p-8 sm:p-10 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-stone-200">
+            <div>
+                <span class="text-xs uppercase font-bold text-amber-700">{{ package.get_tier_display }}</span>
+                <h1 class="font-serif text-3xl font-bold text-stone-900 mt-1">{{ package.name }}</h1>
+            </div>
+            <a :href="'{% url 'catalog:calculator' %}?package_id={{ package.id }}&guests=' + guests" class="px-6 py-3 rounded-full bg-stone-900 text-white font-semibold text-xs hover:bg-amber-600 transition">
+                Рассчитать этот пакет
+            </a>
+        </div>
+
+        <p class="text-xs text-stone-600 my-6 leading-relaxed">{{ package.description }}</p>
+
+        <h3 class="font-serif text-lg font-bold text-stone-900 mb-4">Состав пакета</h3>
+        <div class="space-y-2 text-xs">
+            {% for itm in items %}
+            <div class="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <span class="font-semibold text-stone-800">{{ itm.product.name }}</span>
+                <span class="font-bold text-stone-900">{{ itm.quantity }} шт. ({{ itm.price|floatformat:0 }} ₸)</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

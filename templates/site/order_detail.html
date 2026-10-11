@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказ #{{ order.order_number }} — Mir Prokat{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Order Header (Секция 39 ТЗ) -->
+    <div class="bg-white rounded-3xl border border-stone-200/80 p-6 sm:p-10 mb-8 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-200">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs uppercase tracking-widest font-bold text-amber-700">Заказ на прокат</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold
+                        {% if order.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-800
+                        {% elif order.status == 'PAID' %}bg-emerald-600 text-white
+                        {% elif order.status == 'CANCELLED' %}bg-rose-100 text-rose-800
+                        {% elif order.status == 'NEW' %}bg-amber-100 text-amber-900
+                        {% else %}bg-blue-100 text-blue-900{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <h1 class="font-serif text-3xl font-bold text-stone-900">#{{ order.order_number }}</h1>
+            </div>
+
+            <div class="text-left sm:text-right">
+                <div class="text-xs text-stone-400">Дата мероприятия:</div>
+                <div class="text-lg font-bold text-stone-900">{{ order.event_date|date:"d E Y" }}</div>
+                {% if order.event_time %}
+                <div class="text-xs text-stone-500">Начало: {{ order.event_time|time:"H:i" }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Status Progress Stepper -->
+        <div class="py-8 border-b border-stone-200">
+            <div class="grid grid-cols-5 gap-2 text-center">
+                {% for st in steps %}
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold mb-2 transition
+                        {% if forloop.counter <= current_weight %}bg-amber-600 text-white shadow-sm{% else %}bg-stone-100 text-stone-400 border border-stone-200{% endif %}">
+                        {{ st.icon }}
+                    </div>
+                    <span class="text-[11px] font-semibold {% if forloop.counter <= current_weight %}text-stone-900{% else %}text-stone-400{% endif %}">
+                        {{ st.name }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Event Details Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 py-6 border-b border-stone-200 text-xs">
+            <div>
+                <span class="text-stone-400 block mb-1">Клиент:</span>
+                <div class="font-bold text-stone-900 text-sm">{{ order.client.name }}</div>
+                <div class="text-stone-500 mt-0.5">{{ order.client.phone }}</div>
+                {% if order.client.telegram %}
+                <div class="text-sky-600">{{ order.client.telegram }}</div>
+                {% endif %}
+            </div>
+
+            <div>
+                <span class="text-stone-400 block mb-1">Параметры события:</span>
+                <div class="font-semibold text-stone-800">Гостей: {{ order.guest_count }} чел.</div>
+                <div class="text-stone-500">Тип: {{ order.event_type.name|default:"Банкет" }}</div>
+                {% if order.package %}
+                <div class="text-amber-800 font-medium">Пакет: {{ order.package.name }}</div>
+                {% endif %}
+            </div>
+
+            <div>
+                <span class="text-stone-400 block mb-1">Адрес и логистика:</span>
+                <div class="font-medium text-stone-800">{{ order.address|default:"Самовывоз / уточняется" }}</div>
+                <div class="text-stone-500 mt-0.5">
+                    Доставка: {% if order.need_delivery %}Да ({{ order.delivery_price|floatformat:0 }} ₸){% else %}Нет{% endif %}
+                </div>
+                <div class="text-stone-500">
+                    Монтаж: {% if order.need_setup %}Да{% else %}Нет{% endif %} / Демонтаж: {% if order.need_teardown %}Да{% else %}Нет{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Composition Table (Секция 39 ТЗ) -->
+        <div class="pt-6">
+            <h3 class="font-serif text-lg font-bold text-stone-900 mb-4">Состав заказа</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                            <th class="py-2.5">Наименование товара</th>
+                            <th class="py-2.5 text-center">Количество</th>
+                            <th class="py-2.5 text-right">Цена за сут.</th>
+                            <th class="py-2.5 text-right">Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-100">
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td class="py-3 font-semibold text-stone-900">{{ item.product.name }}</td>
+                            <td class="py-3 text-center font-bold">{{ item.quantity }} шт.</td>
+                            <td class="py-3 text-right text-stone-500">{{ item.rental_price|floatformat:0 }} ₸</td>
+                            <td class="py-3 text-right font-bold text-stone-900">{{ item.total_price|floatformat:0 }} ₸</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="py-4 text-center text-stone-400">Товары не указаны</td>
+                        </tr>
+                        {% endfor %}
+
+                        {% for srv in order.services.all %}
+                        <tr class="text-amber-900 bg-amber-50/40">
+                            <td class="py-3 font-semibold">🔧 {{ srv.service.name }}</td>
+                            <td class="py-3 text-center font-medium">1 усл.</td>
+                            <td class="py-3 text-right text-stone-500">{{ srv.price|floatformat:0 }} ₸</td>
+                            <td class="py-3 text-right font-bold">{{ srv.total_price|floatformat:0 }} ₸</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="mt-6 pt-6 border-t-2 border-stone-200 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <div class="space-y-1 text-xs text-stone-500">
+                    <div>Возвратный залог: <b class="text-stone-800">{{ order.deposit_price|floatformat:0 }} ₸</b></div>
+                    <div>Оплачено: <b class="text-emerald-700">{{ order.paid_amount|floatformat:0 }} ₸</b></div>
+                    <div>Остаток к доплате: <b class="text-rose-700">{{ order.remaining_amount|floatformat:0 }} ₸</b></div>
+                </div>
+
+                <div class="text-left sm:text-right">
+                    <span class="text-xs text-stone-400 block">Итоговая стоимость:</span>
+                    <div class="text-3xl font-serif font-bold text-stone-900">
+                        {{ order.total_price|floatformat:0 }} ₸
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manager Contact Box -->
+        <div class="mt-8 pt-6 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-4 bg-stone-50 p-5 rounded-2xl">
+            <div>
+                <div class="font-bold text-stone-900 text-xs">Нужна консультация или изменение заказа?</div>
+                <div class="text-[11px] text-stone-500">Менеджер всегда на связи в рабочие часы</div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="tel:+77771234567" class="px-4 py-2 rounded-xl bg-white border border-stone-300 text-xs font-semibold text-stone-800 hover:bg-stone-100 transition">
+                    📞 Позвонить
+                </a>
+                <a href="https://t.me/mir_prokat_bot" target="_blank" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-xs font-semibold hover:bg-sky-600 transition flex items-center gap-1.5">
+                    <span>✈️</span> Написать менеджеру
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
